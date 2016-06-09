@@ -1,0 +1,27 @@
+{
+  "name": "bagart/FinXLog",
+  "description": "PHP loader financial quotation and show graph",
+  "homepage": "https://github.com/bagart/FinXLog",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Baltaev Artur",
+      "email": "bagart@list.ru",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "vlucas/phpdotenv": "^2.2",
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.7.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "FinXLog\\": "src/Classes/"
+    },
+    "files": [
+      "config/app.php"
+    ]
+  }
+}
