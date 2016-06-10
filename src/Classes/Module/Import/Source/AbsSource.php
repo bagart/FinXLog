@@ -1,6 +1,7 @@
 <?php
 namespace FinXLog\Module\Import\Source;
 use FinXLog\Exception;
+
 abstract class AbsSource
 {
     const DATETIME_FORMAT = 'Y/m/d h:i:s';
@@ -25,13 +26,15 @@ abstract class AbsSource
                 $result
             )
         ) {
-            throw new Exception\WrongParam(
+            throw (new Exception\WrongImport(
                 'import quotatin with empty param: '
                 . implode(', ', array_keys($diff))
-            );
+            ))
+                ->setParams(['quotation' =>$result]);
         }
         if (!strtotime($result['T'])) {
-            throw new Exception\WrongParam('is not a valid datetime: ' . $result['T']);
+            throw (new Exception\WrongParams('is not a valid datetime: ' . $result['T']))
+                ->setParams(['T' => $result['T']]);
         }
     }
 
@@ -59,7 +62,8 @@ abstract class AbsSource
     {
         $timestamp = strtotime($string);
         if (!$timestamp) {
-            throw new Exception\WrongParam('is not a valid datetime: ' . $string);
+            throw (new Exception\WrongParams('is not a valid datetime: ' . $string))
+                ->setParams(['T' => $string]);
         }
         return date(static::DATETIME_FORMAT, $timestamp);
     }

@@ -6,10 +6,17 @@
  */
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$import = new FinXLog\Module\Import\SaveQuotation();
+$import = (new FinXLog\Module\Import\SaveQuotation());
 
-$import->run(
-    !empty($argv[1])
-        ? $argv[1]
-        : null
-);
+
+if (in_array('fail', $argv)) {
+    $import->setQueueConnector($import->getFailQueueConnector());
+}
+$count = null;
+foreach ($argv as $a) {
+    if (is_numeric($a) && $a > 0) {
+        $count = $a;
+    }
+}
+
+$import->run($count);

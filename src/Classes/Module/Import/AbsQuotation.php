@@ -12,18 +12,16 @@ use Pheanstalk\Job;
  * Class SaveQuotation
  * @package FinXLog\Module\Import
  */
-abstract class AbsQuotation implements Iface\ModuleImport
+abstract class AbsQuotation implements Iface\ModuleImportQueue
 {
     use Traits\WithQueueConnector;
 
     private $fail_queue_connector = null;
     private $model_quotation = null;
 
-    abstract public function run($limit = null);
-
     public function getFailQueueConnector()
     {
-        if ($this->fail_queue_connector) {
+        if (!$this->fail_queue_connector) {
             $this->fail_queue_connector = new Connector\Queue(
                 getenv('FINXLOG_AMQP_TUBE_QUOTATION_FAIL')
             );
@@ -51,13 +49,19 @@ abstract class AbsQuotation implements Iface\ModuleImport
 
     public function failQueu(Job $queue_job)
     {
-        $this->getFailQueueConnector()
-            ->put(
-                $queue_job->getData()
-            );
+        if ($this->getFailQueueConnector()) {
+            $this->getFailQueueConnector()
+                ->put(
+                    $queue_job->getData()
+                );
+        }
 
-        $this->getQueueConnector()
-            ->delete($queue_job);
+        if ($this->getQueueConnector()) {
+            $this->getQueueConnector()
+                ->delete($queue_job);
+        }
+
+        return $this;
     }
 
     public function importQuotation($string)
@@ -66,6 +70,8 @@ abstract class AbsQuotation implements Iface\ModuleImport
             ->save(
                 Import\Source\Telnet::getFromRaw($string)
             );
+
+        return $this;
     }
 
 }

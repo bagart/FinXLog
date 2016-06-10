@@ -1,10 +1,11 @@
 <?php
 namespace FinXLog\Module\Import;
 
+use FinXLog\Exception;
 use FinXLog\Iface;
 use FinXLog\Module\Connector;
+use FinXLog\Module\Logger;
 use FinXLog\Traits;
-use FinXLog\Helper;
 use FinXLog\Model;
 
 /**
@@ -19,13 +20,21 @@ class SaveQuotation extends AbsQuotation
             ->watch();
 
         while ($limit === null || --$limit >= 0) {
-            $queu_job = $this->getQueueConnector()->reserve();
+            $queue_job = $this->getQueueConnector()->reserve();
             try {
-                $this->importQuotation($queu_job->getData());
+                $this->importQuotation($queue_job->getData());
+                Logger::log()->debug('+');
                 $this->getQueueConnector()
-                    ->delete($queu_job);
+                    ->delete($queue_job);
+            } catch (Exception\WrongImport $e) {
+                Logger::log()->debug('-');
+                Logger::error('SaveQuotation WrongImport', $e);
+                $this->getQueueConnector()
+                    ->delete($queue_job);
             } catch (\Exception $e) {
-                $this->failQueu($queu_job);
+                Logger::log()->debug('-');
+                Logger::error('SaveQuotation exception', $e);
+                $this->failQueu($queue_job);
             }
         }
 

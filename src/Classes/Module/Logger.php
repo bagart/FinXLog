@@ -1,5 +1,6 @@
 <?php
 namespace FinXLog\Module;
+use FinXLog\Iface;
 use \Monolog;
 
 class Logger
@@ -25,16 +26,41 @@ class Logger
         return static::$inctance;
     }
 
+    /**
+     * @return null|\Psr\Log\LoggerInterface|Monolog\Logger
+     */
     public static function log()
     {
         return static::me()->getLogger();
     }
+    public static function error($message, $context)
+    {
+        if ($context instanceof \Exception) {
+            $context = [
+                'exception' => get_class($context),
+                'trace' =>$context->getTraceAsString()
+            ];
+            if ($context instanceof Iface\ExceptionWithParams) {
+                $context = [
+                    'params' => $context->getParams()
+                ];
+            }
+        }
+
+        return static::log()->err($message, $context);
+    }
+
 
     public function setLogger(\Psr\Log\LoggerInterface $logger)
     {
         $this->logger = $logger;
 
         return $this;
+    }
+
+    private function getDefaultCliFormater()
+    {
+        return new Monolog\Formatter\LineFormatter("%message%");
     }
 
     private function getLoggerDefault()
@@ -48,11 +74,15 @@ class Logger
                 )
             )
             ->pushHandler(
-                new Monolog\Handler\StreamHandler(
-                    'php://stdout',
-                    Monolog\Logger::INFO,
-                    false
+                (
+                    new Monolog\Handler\StreamHandler(
+                        'php://stdout',
+                        getenv('FINXLOG_DEBUG') ? Monolog\Logger::DEBUG : Monolog\Logger::INFO
+                    )
                 )
+                    ->setFormatter(
+                        $this->getDefaultCliFormater()
+                    )
             );
 
         return $logger;

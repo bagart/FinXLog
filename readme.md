@@ -43,15 +43,6 @@ cd FinXLog
 composer update
 ```
 
-## Optional: use with AMQP Queue for exchange high traffic
-important: direct import is more quickly, if server has free resource
-
-### Install beanstool
-```bash
-wget https://github.com/src-d/beanstool/releases/download/v0.2.0/beanstool_v0.2.0_linux_amd64.tar.gz
-tar -xvzf beanstool_v0.2.0_linux_amd64.tar.gz
-sudo cp beanstool_v0.2.0_linux_amd64/beanstool /usr/local/bin/
-```
 -------------------------------
 # Using
 Daemon for import quotation:
@@ -60,13 +51,19 @@ Daemon for import quotation:
 command/daemon/quotation_exchange2db.php
 ```
 
+## Optional: use with AMQP Queue for exchange high traffic
+important: direct import is more quickly, if server has free resource
 
 ```bash
+#run each daemons
 command/daemon/quotation_exchange2amqp.php
+
+#load daemons can work on other servers with fork
 command/daemon/quotation_amqp2db.php
+command/daemon/quotation_amqp2db.php fail
 ```
 
-## Optional replacement for quotation_load.php
+## Optional BASH replacement for quotation_load.php
 is direct linux-way socket to amqp pipe for high performance
 source: https://github.com/src-d/beanstool
 
@@ -74,4 +71,12 @@ source: https://github.com/src-d/beanstool
 command/daemon/quotation_exchange2amqp.sh
 ```
 
+### Install beanstool
+```bash
+wget https://github.com/src-d/beanstool/releases/download/v0.2.0/beanstool_v0.2.0_linux_amd64.tar.gz
+tar -xvzf beanstool_v0.2.0_linux_amd64.tar.gz
+sudo cp beanstool_v0.2.0_linux_amd64/beanstool /usr/local/bin/
+```
+
 @todo: make quotation_exchange2db.sh
+@todo: lock for parallel import
