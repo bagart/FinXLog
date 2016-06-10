@@ -34,7 +34,7 @@ class ConnectorQuotationTest extends PHPUnit_Framework_TestCase
             'wrong result:' . $result
         );
 
-        $quotation =  \FinXLog\Module\Import\Source\Telnet::getFromRaw($result);
+        $quotation = \FinXLog\Module\Import\Source\Telnet::getFromRaw($result);
         $this->assertTrue(is_array($quotation));
         $this->assertTrue(count($quotation) == 3);
         $this->assertTrue($quotation === $quotation + ['T' => 1, 'B'=>2, 'S'=>3]);
