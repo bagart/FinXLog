@@ -43,8 +43,16 @@ cd FinXLog
 composer update
 ```
 
+## Optional: use with AMQP Queue for exchange high traffic
+important: direct import is more quickly, if server has free resource
 
-
+### Install beanstool
+```bash
+wget https://github.com/src-d/beanstool/releases/download/v0.2.0/beanstool_v0.2.0_linux_amd64.tar.gz
+tar -xvzf beanstool_v0.2.0_linux_amd64.tar.gz
+sudo cp beanstool_v0.2.0_linux_amd64/beanstool /usr/local/bin/
+```
+-------------------------------
 # Using
 Daemon for import quotation:
 
@@ -52,8 +60,6 @@ Daemon for import quotation:
 command/daemon/quotation_exchange2db.php
 ```
 
-## Optional: use with AMQP Queue for exchange high traffic
-important: direct import is more quickly, if server has free resource
 
 ```bash
 command/daemon/quotation_exchange2amqp.php
@@ -63,14 +69,7 @@ command/daemon/quotation_amqp2db.php
 ## Optional replacement for quotation_load.php
 is direct linux-way socket to amqp pipe for high performance
 source: https://github.com/src-d/beanstool
-### Install beanstool
-```bash
-wget https://github.com/src-d/beanstool/releases/download/v0.2.0/beanstool_v0.2.0_linux_amd64.tar.gz
-tar -xvzf beanstool_v0.2.0_linux_amd64.tar.gz
-sudo cp beanstool_v0.2.0_linux_amd64/beanstool /usr/local/bin/
-```
-### Run
-@todo: make auto-restart on network error
+
 ```bash
 command/daemon/quotation_exchange2amqp.sh
 ```
