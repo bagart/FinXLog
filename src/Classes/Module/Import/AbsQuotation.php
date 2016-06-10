@@ -1,14 +1,14 @@
 <?php
 namespace FinXLog\Module\Import;
-
 use FinXLog\Iface;
 use FinXLog\Module\Connector;
+use FinXLog\Module\Import;
 use FinXLog\Traits;
-use FinXLog\Helper;
 use FinXLog\Model;
 use Pheanstalk\Job;
 
 /**
+ * make layer for different import source
  * Class SaveQuotation
  * @package FinXLog\Module\Import
  */
@@ -41,11 +41,6 @@ abstract class AbsQuotation implements Iface\ModuleImport
         return $this->model_quotation;
     }
 
-    public function getDefaultDbConnector()
-    {
-        return new Connector\Db();
-    }
-
     public function getDefaultQueueConnector()
     {
         return new Connector\Queue(
@@ -56,7 +51,10 @@ abstract class AbsQuotation implements Iface\ModuleImport
 
     public function failQueu(Job $queue_job)
     {
-        $this->getFailQueueConnector()->put($queue_job->getData());
+        $this->getFailQueueConnector()
+            ->put(
+                $queue_job->getData()
+            );
 
         $this->getQueueConnector()
             ->delete($queue_job);
@@ -66,27 +64,8 @@ abstract class AbsQuotation implements Iface\ModuleImport
     {
         $this->getModelQuotation()
             ->save(
-                $this->getFromString($string)
+                Import\Source\Telnet::getFromRaw($string)
             );
     }
 
-    public function getFromString($string)
-    {
-        assert(is_string($string));
-
-        $field = explode(
-            ';',
-            trim($string)
-        );
-        assert(count($field) == 3);
-        $result = [];
-        foreach ($field as $cur) {
-            list($name, $value) = explode('=', $cur);
-            $result[$name] = $value;
-        }
-
-        $result['T'] = strtotime($result['T']);
-
-        return $result;
-    }
 }
