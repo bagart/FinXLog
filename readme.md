@@ -1,15 +1,15 @@
-сделано: 
+Complete: 
  - import
  - filter
  - save
 
-инструменты:
- - база данных ElasticSearch для быстрого поиска и bigdata
-опционально: 
- - менеджер очередей BeanstalkD(AMQP) (по умолчанию работает без него). причина: для быстрой доставки клиентам и выдерживания "любой" нагрузки без анализа дублей(bash-скрипт)
- - composer
- - monolog
- - .env  окружение
+Instruments:
+ - ElasticSearch for quick bigdata search
+Oprional: 
+ - BeanstalkD(AMQP, Queue manager). reason for use: quick delivery for "any" load with single stream(bash-scrpit)
+ - Composer, PSR-4
+ - Monolog
+ - ".ENV"  environment
 
 
 что надо сделать
