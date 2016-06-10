@@ -5,6 +5,7 @@ use FinXLog\Exception\ConnectionError;
 use FinXLog\Exception\ErrorParam;
 use FinXLog\Iface;
 use FinXLog\Module\Connector;
+use FinXLog\Module\Logger;
 use FinXLog\Traits;
 use FinXLog\Helper;
 use FinXLog\Model;
@@ -36,6 +37,7 @@ class LoadQuotation extends AbsQuotation
                 $this->getConnector()
                     ->getQuotation()
             );
+            Logger::log()->info('job done');
         }
 
         return $this;

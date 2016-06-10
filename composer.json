@@ -14,7 +14,8 @@
     "vlucas/phpdotenv": "^2.2",
     "clue/socket-raw": "~1.2",
     "pda/pheanstalk": "^3.1",
-    "ruflin/Elastica": "^3.2"
+    "ruflin/Elastica": "^3.2",
+    "monolog/monolog": "^1.19"
   },
   "require-dev": {
     "phpunit/phpunit": "4.7.*"
@@ -25,6 +26,14 @@
     },
     "files": [
       "config/app.php"
+    ]
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "cp .env.example .env"
+    ],
+    "post-update-cmd": [
+
     ]
   }
 }
