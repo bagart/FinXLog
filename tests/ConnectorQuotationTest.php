@@ -34,10 +34,10 @@ class ConnectorQuotationTest extends PHPUnit_Framework_TestCase
             'wrong result:' . $result
         );
 
-        $result = FinXLog\Helper\Quotation::getFromString($result);
-        $this->assertTrue(is_array($result));
-        $this->assertTrue(count($result) == 3);
-        $this->assertTrue($result === $result + ['T' => 1, 'B'=>2, 'S'=>3]);
+        $quotation =  (new \FinXLog\Module\Import\LoadQuotation)->getFromString($result);
+        $this->assertTrue(is_array($quotation));
+        $this->assertTrue(count($quotation) == 3);
+        $this->assertTrue($quotation === $quotation + ['T' => 1, 'B'=>2, 'S'=>3]);
 
     }
 
