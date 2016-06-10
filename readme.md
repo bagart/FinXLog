@@ -1,31 +1,33 @@
+v 0.9.1
 Complete: 
  - import
  - filter
  - save
+ - queue
+ - elastic log
 
 Instruments:
- - ElasticSearch for quick bigdata search
-Oprional: 
- - BeanstalkD(AMQP, Queue manager). reason for use: quick delivery for "any" load with single stream(bash-scrpit)
+ - ElasticSearch for quick big data search
  - Composer, PSR-4
  - Monolog
  - ".ENV"  environment
+
+Optional:
+ - BeanstalkD(AMQP Queue manager). reason for use: quick delivery for "any" load with single stream(bash-scrpit)
+
 
 
 что надо сделать
  - модуль для аггрегации данных https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html
  - браузерный  static интерфейс с highcharts, etc
  - простое json API 
+ - испрользовать те же очереди для доставки клиентам(websocket, socket.io) параллельно с сохранением в БД 
 
-опционально и причина использования менеджера очередей: 
-параллельно с сохранением данных в БД, отправлять данные клиентам данные в реальном времени(поступления) через websocket или socket.io.
-настройка преоретизации - сначала в бд, потом к клиентам
-
-можно:
-опционально сохранение в SQL если "появятся" SQL задачи
-использование ElasticSearch для всех логов
-
-
+Optional:
+ - sql db
+ - make quotation_exchange2db.sh
+ - lock for parallel import
+ 
 # Install
 ```bash
 #install requirements
@@ -77,6 +79,3 @@ wget https://github.com/src-d/beanstool/releases/download/v0.2.0/beanstool_v0.2.
 tar -xvzf beanstool_v0.2.0_linux_amd64.tar.gz
 sudo cp beanstool_v0.2.0_linux_amd64/beanstool /usr/local/bin/
 ```
-
-@todo: make quotation_exchange2db.sh
-@todo: lock for parallel import
