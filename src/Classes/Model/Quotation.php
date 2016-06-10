@@ -1,10 +1,10 @@
 <?php
 namespace FinXLog\Model;
+use FinXLog\Traits;
 
-class Quotation
+class Quotation extends AbsElasticoModel
 {
-    public function save($quotation)
-    {
-        var_dump($quotation);
-    }
+    protected $index = 'quotation';
+    protected $type = 'quotation';
+    protected $id = null;
 }

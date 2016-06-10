@@ -16,7 +16,7 @@ trait WithConnector
 
     abstract public function getDefaultConnector();
 
-    public function setConnector(Iface\Connector $connector)
+    public function setConnector($connector)
     {
         if (method_exists($this, 'checkConnector')) {
             $this->checkConnector($connector);

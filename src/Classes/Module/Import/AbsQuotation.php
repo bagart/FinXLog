@@ -54,12 +54,12 @@ abstract class AbsQuotation implements Iface\ModuleImport
     }
 
 
-    public function failQueu(Job $queu_job)
+    public function failQueu(Job $queue_job)
     {
-        $this->getFailQueueConnector()->put($queu_job->getData());
+        $this->getFailQueueConnector()->put($queue_job->getData());
 
         $this->getQueueConnector()
-            ->delete($queu_job);
+            ->delete($queue_job);
     }
 
     public function importQuotation($string)
