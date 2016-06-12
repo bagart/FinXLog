@@ -2,11 +2,11 @@
 namespace FinXLog\Model;
 use Elastica\Connection;
 use FinXLog\Iface;
-use FinXLog\Module\Connector\Elastico;
+use FinXLog\Module\Connector\Elastica;
 use FinXLog\Traits;
 
 
-class AbsElasticoModel extends AbsModel implements Iface\ElasticoConnector
+class AbsElasticaModel extends AbsModel implements Iface\ElasticaConnector
 {
     use Traits\WithConnector;
 
@@ -68,7 +68,7 @@ class AbsElasticoModel extends AbsModel implements Iface\ElasticoConnector
 
     protected function getDefaultParams()
     {
-        $param = getenv('FINXLOG_ELASTICO_PARAM');
+        $param = getenv('FINXLOG_ELASTICA_PARAM');
         assert(!empty($param));
         $param = json_decode($param, true);
         assert(!empty($param));
@@ -78,7 +78,7 @@ class AbsElasticoModel extends AbsModel implements Iface\ElasticoConnector
 
     public function getDefaultConnector()
     {
-        return new Elastico();
+        return new Elastica();
     }
 
     /**
@@ -87,6 +87,27 @@ class AbsElasticoModel extends AbsModel implements Iface\ElasticoConnector
     public function getDb()
     {
         return $this->getConnector()->getConnector();
+    }
+
+    /**
+     * @return \Elastica\Index
+     */
+    public function getElasticIndex()
+    {
+        return $this->getDb()
+            ->getIndex($this->index);
+    }
+
+    //@todo for simple query
+    //public function getResult(Query $query);
+
+    /**
+     * @return \Elastica\ResultSet
+     */
+    public function getResponse(\Elastica\Query $query)
+    {
+        return $this->getElasticIndex()
+            ->search($query);
     }
 
     public function checkConnector(Iface\Connector $connector)

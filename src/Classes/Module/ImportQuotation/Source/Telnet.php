@@ -1,5 +1,5 @@
 <?php
-namespace FinXLog\Module\Import\Source;
+namespace FinXLog\Module\ImportQuotation\Source;
 
 use FinXLog\Exception;
 use FinXLog\Iface;

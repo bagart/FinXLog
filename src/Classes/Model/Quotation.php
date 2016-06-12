@@ -2,7 +2,7 @@
 namespace FinXLog\Model;
 use FinXLog\Traits;
 
-class Quotation extends AbsElasticoModel
+class Quotation extends AbsElasticaModel
 {
     protected $index = 'quotation';
     protected $type = 'quotation';

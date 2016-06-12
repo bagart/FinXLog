@@ -6,8 +6,7 @@
  */
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$import = (new FinXLog\Module\Import\SaveQuotation());
-
+$import = (new FinXLog\Module\ImportQuotation\SaveQuotation());
 
 if (in_array('fail', $argv)) {
     $import->setQueueConnector($import->getFailQueueConnector());

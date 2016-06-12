@@ -1,10 +1,11 @@
 <?php
-namespace FinXLog\Module\Import\Source;
+namespace FinXLog\Module\ImportQuotation\Source;
 use FinXLog\Exception;
 
 abstract class AbsSource
 {
-    const DATETIME_FORMAT = 'Y/m/d h:i:s';
+    const DATETIME_FORMAT = 'Y/m/d H:i:s';
+
     protected static $valid_quotation = [
         'S' => 'MSG',
         'T' => '2001-01-01',
@@ -52,9 +53,9 @@ abstract class AbsSource
 
     public static function prepare(array $result)
     {
-        assert(!empty($result['T']));
-
         $result['T'] = static::getTime($result['T']);
+        $result['B'] = (float) $result['B'];
+        assert(!empty($result['B']));
 
         return $result;
     }

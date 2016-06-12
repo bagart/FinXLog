@@ -1,8 +1,8 @@
 <?php
-namespace FinXLog\Module\Import;
+namespace FinXLog\Module\ImportQuotation;
 use FinXLog\Iface;
 use FinXLog\Module\Connector;
-use FinXLog\Module\Import;
+use FinXLog\Module\ImportQuotation;
 use FinXLog\Traits;
 use FinXLog\Model;
 use Pheanstalk\Job;
@@ -68,7 +68,7 @@ abstract class AbsQuotation implements Iface\ModuleImportQueue
     {
         $this->getModelQuotation()
             ->save(
-                Import\Source\Telnet::getFromRaw($string)
+                ImportQuotation\Source\Telnet::getFromRaw($string)
             );
 
         return $this;

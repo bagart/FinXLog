@@ -35,7 +35,7 @@ class Logger
     }
     public static function error($message, $context)
     {
-        if ($context instanceof \Exception) {
+        if ($context instanceof \Throwable) {
             $context = [
                 'exception' => get_class($context),
                 'trace' =>$context->getTraceAsString()

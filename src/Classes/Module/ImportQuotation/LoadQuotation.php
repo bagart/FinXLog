@@ -1,5 +1,5 @@
 <?php
-namespace FinXLog\Module\Import;
+namespace FinXLog\Module\ImportQuotation;
 
 use FinXLog\Exception\ConnectionError;
 use FinXLog\Iface;
@@ -35,10 +35,11 @@ class LoadQuotation extends AbsQuotation
             try {
                 $import = $this->getConnector()
                     ->getQuotation();
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 Logger::log()->debug('-');
                 Logger::error('LoadQuotation getQuotation error', $e);
             }
+
             if ($import) {
                 try {
                     $this->saveJob($import);

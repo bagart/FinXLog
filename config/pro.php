@@ -4,9 +4,9 @@ try {
     assert(\FinXLog\Module\Logger::log() instanceof \Monolog\Logger);
     $logClient = new \Elastica\Client(
         json_decode(
-            getenv('FINXLOG_ELASTICO_LOG_PARAM')
-                ? getenv('FINXLOG_ELASTICO_LOG_PARAM')
-                : getenv('FINXLOG_ELASTICO_PARAM'),
+            getenv('FINXLOG_ELASTICA_LOG_PARAM')
+                ? getenv('FINXLOG_ELASTICA_LOG_PARAM')
+                : getenv('FINXLOG_ELASTICA_PARAM'),
             true
         )
     );

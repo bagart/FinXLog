@@ -6,7 +6,7 @@
  */
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$import = new FinXLog\Module\Import\LoadQuotation();
+$import = new FinXLog\Module\ImportQuotation\LoadQuotation();
 
 $import
     ->setWorkWithSwitch(false)

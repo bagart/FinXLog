@@ -16,11 +16,12 @@ class ConnectorQuotationTest extends PHPUnit_Framework_TestCase
         return $this->app;
     }
 
-    public function test_connector()
+    public function test_basic()
     {
         $this->assertTrue($this->getApp()->getDefaultConnector() instanceof \Socket\Raw\Socket);
         $this->assertTrue($this->getApp()->getConnector() instanceof \Socket\Raw\Socket);
     }
+
     public function test_read()
     {
         $this->assertTrue(strlen($this->getApp()->read()) > 0);
@@ -34,7 +35,7 @@ class ConnectorQuotationTest extends PHPUnit_Framework_TestCase
             'wrong result:' . $result
         );
 
-        $quotation = \FinXLog\Module\Import\Source\Telnet::getFromRaw($result);
+        $quotation = \FinXLog\Module\ImportQuotation\Source\Telnet::getFromRaw($result);
         $this->assertTrue(is_array($quotation));
         $this->assertTrue(count($quotation) == 3);
         $this->assertTrue($quotation === $quotation + ['T' => 1, 'B'=>2, 'S'=>3]);

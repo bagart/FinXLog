@@ -1,5 +1,5 @@
 <?php
-namespace FinXLog\Module\Import;
+namespace FinXLog\Module\ImportQuotation;
 
 use FinXLog\Exception;
 use FinXLog\Iface;
@@ -31,7 +31,7 @@ class SaveQuotation extends AbsQuotation
                 Logger::error('SaveQuotation WrongImport', $e);
                 $this->getQueueConnector()
                     ->delete($queue_job);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 Logger::log()->debug('-');
                 Logger::error('SaveQuotation exception', $e);
                 $this->failQueu($queue_job);
