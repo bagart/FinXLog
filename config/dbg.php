@@ -25,8 +25,7 @@ assert_options(
 
 set_error_handler(
     function ($code, $string, $file, $line, $context = []) {
-        \FinXLog\Module\Logger::log()
-            ->warning($string . ";code:$code at $file:$line");
+        \FinXLog\Module\Logger::error($string . ";code:$code at $file:$line", $context);
 
         return true;
     }

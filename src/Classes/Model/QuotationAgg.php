@@ -6,6 +6,18 @@ use FinXLog\Traits;
 
 class QuotationAgg extends Quotation
 {
+    /**
+     * @todo period deep
+     * @var array
+     */
+    protected $agg_period = [
+        'M1' => '60',
+        'M5' => '300',
+        'H1' => '3600',
+        'D1' => '86400',
+        'W1' => '604800',
+    ];
+
     /*
      * more test, any first, not avg first
         "first":{"top_hits":{"size": 1,"sort":[{"T": {"order": "asc"}}]}}
@@ -90,7 +102,7 @@ class QuotationAgg extends Quotation
      */
     public function getDoji($subject, $interval = 'day')
     {
-        return $this->getResult(
+        return $this->getAggregations(
             $this->getDojiQuery(
                 $subject,
                 $interval
@@ -103,7 +115,7 @@ class QuotationAgg extends Quotation
      * @param Query $query
      * @return array
      */
-    public function getResult(Query $query)
+    public function getAggregations(Query $query)
     {
         return current( //1st agg name is not important
             $this->getResponse($query)
@@ -120,4 +132,10 @@ class QuotationAgg extends Quotation
 
         return new Query($query);
     }
+
+    public function getAggPeriod()
+    {
+        return $this->agg_period;
+    }
+
 }

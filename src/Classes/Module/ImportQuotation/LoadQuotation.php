@@ -42,7 +42,7 @@ class LoadQuotation extends AbsQuotation
 
             if ($import) {
                 try {
-                    $this->saveJob($import);
+                    $this->addJob($import);
                     Logger::log()->debug('+');
                 } catch (\Exception $e) {
                     Logger::log()->debug('-');
@@ -54,7 +54,7 @@ class LoadQuotation extends AbsQuotation
         return $this;
     }
 
-    public function saveJob($string)
+    public function addJob($string)
     {
         if ($this->work_with_amqp) {
             if ($this->getQueueConnector()) {

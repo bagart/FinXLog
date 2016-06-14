@@ -23,7 +23,7 @@ abstract class AbsQuotation implements Iface\ModuleImportQueue
     {
         if (!$this->fail_queue_connector) {
             $this->fail_queue_connector = new Connector\Queue(
-                getenv('FINXLOG_AMQP_TUBE_QUOTATION_FAIL')
+                getenv('FINXLOG_AMQP_TUBE_IMPORT_FAIL')
             );
         }
 
@@ -42,7 +42,7 @@ abstract class AbsQuotation implements Iface\ModuleImportQueue
     public function getDefaultQueueConnector()
     {
         return new Connector\Queue(
-            getenv('FINXLOG_AMQP_TUBE_QUOTATION')
+            getenv('FINXLOG_AMQP_TUBE_IMPORT')
         );
     }
 

@@ -41,7 +41,7 @@ abstract class AbsSource
 
     public static function filter(array $result)
     {
-        if (getenv('FINXLOG_FILTER_OTHER')) {
+        if (getenv('FINXLOG_IMPORT_FILTER_OTHER')) {
             $result = array_diff_key(
                 $result,
                 static::getValidQuotation()

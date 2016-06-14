@@ -1,6 +1,7 @@
 <?php
 namespace FinXLog\Model;
 use Elastica\Connection;
+use Elastica\Query;
 use FinXLog\Iface;
 use FinXLog\Module\Connector\Elastica;
 use FinXLog\Traits;
@@ -115,6 +116,17 @@ class AbsElasticaModel extends AbsModel implements Iface\ElasticaConnector
         assert($connector->getConnector() instanceof \Elastica\Client);
 
         return $this;
+    }
+
+    /**
+     * return
+     * @param Query $query
+     * @return array
+     */
+    public function getDocuments(Query $query)
+    {
+        return $this->getResponse($query)
+            ->getDocuments();
     }
 
 }
