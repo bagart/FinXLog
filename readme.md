@@ -18,10 +18,8 @@ Optional:
 
 
 что надо сделать
- - модуль для аггрегации данных https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html
- - браузерный  static интерфейс с highcharts, etc
+ - доделать подгрузку highcharts+websocket
  - простое json API 
- - испрользовать те же очереди для доставки клиентам(websocket, socket.io) параллельно с сохранением в БД 
 
 Optional:
  - sql db
