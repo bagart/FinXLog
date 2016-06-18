@@ -86,27 +86,37 @@ class RatchetClient implements Iface\WsConnector
         return $this;
     }
 
+    public function reconnect()
+    {
+
+        $this->event_loop = null;
+        $this->connector = null;
+        $this->promise = null;
+        Logger::dbg(':WS_RECONNECT:');
+
+        return $this;
+    }
+
     public function send($message, callable $incomingCallback = null)
     {
-        //reconnec
-        //force new connect
-
-        $self = $this;
+        $ratchet_module = $this;
 
         $is_first = empty($this->event_loop);
         $event_loop = $this->getEventLoop();
+
         $this->getPromise()->then(
             function(\Ratchet\Client\WebSocket $conn)
-            use ($message, $event_loop, $incomingCallback, $self)
+            use ($message, $event_loop, $incomingCallback, $ratchet_module)
             {
-
-                $conn->on('error', function($error) use ($conn, $self, $message, $incomingCallback) {
+                $conn->on('error', function($error) use ($conn, $ratchet_module, $message, $incomingCallback) {
                     //@todo reconnect it's check only on second
                     //without send - 3 iterations
+                    Logger::log()->notice("AMQP2WS(service): error");
+                    $ratchet_module->reconnect();
                     if ($incomingCallback) {
-                        $self->send($message, $incomingCallback);
+                        $ratchet_module->send($message, $incomingCallback);
                     } else {
-                        $self->send($message);
+                        $ratchet_module->send($message);
                     }
                 });
 
@@ -119,7 +129,13 @@ class RatchetClient implements Iface\WsConnector
                     );
                 }
                 if (getenv('FINXLOG_DEBUG')) {
-                    Logger::log()->info("AMQP2WS(service) send try:\t{$message}");
+                    Logger::log()->info(
+                        "AMQP2WS(service) send try:\t" . (
+                            getenv('FINXLOG_DEBUG') == \Monolog\Logger::DEBUG
+                                ? preg_replace('~\s+~u', ' ', $message) . '!!!!!'
+                                : substr($message, 0, 70) . '...'
+                        )
+                    );
                     if (empty($conn->listeners('close'))) { //new connect
                         $conn->on(
                             'close',
