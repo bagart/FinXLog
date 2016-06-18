@@ -33,7 +33,8 @@ class Logger
     {
         return static::me()->getLogger();
     }
-    public static function error($message, $context)
+
+    public static function error($message, $context = [])
     {
         if ($context instanceof \Throwable) {
             $context = [
@@ -47,9 +48,26 @@ class Logger
             }
         }
 
-        return static::log()->err($message, $context);
+        return static::log()->error($message, $context);
     }
 
+
+    public static function dbg($message, $context = [])
+    {
+        if ($context instanceof \Throwable) {
+            $context = [
+                'exception' => get_class($context),
+                'trace' =>$context->getTraceAsString()
+            ];
+            if ($context instanceof Iface\ExceptionWithParams) {
+                $context = [
+                    'params' => $context->getParams()
+                ];
+            }
+        }
+
+        return static::log()->debug($message, $context);
+    }
 
     public function setLogger(\Psr\Log\LoggerInterface $logger)
     {
@@ -60,30 +78,64 @@ class Logger
 
     private function getDefaultCliFormater()
     {
-        return new Monolog\Formatter\LineFormatter("%message%");
+        return new Monolog\Formatter\LineFormatter("%message%\n");
+    }
+
+    private function getDefaultSingleLineFormater()
+    {
+        return new Monolog\Formatter\LineFormatter('%message%');
     }
 
     private function getLoggerDefault()
     {
-        $logger = new Monolog\Logger('Language');
-        $logger
-            ->pushHandler(
-                new Monolog\Handler\StreamHandler(
-                    'php://stderr',
-                    Monolog\Logger::WARNING
+        $logger = (new Monolog\Logger('Language'));
+
+
+        if (!getenv('FINXLOG_DEBUG')) {
+            $logger
+                ->pushHandler(
+                    new Monolog\Handler\StreamHandler(
+                        'php://stderr',
+                        Monolog\Logger::WARNING
+                    )
+                );
+        } elseif (getenv('FINXLOG_DEBUG') <= Monolog\Logger::DEBUG) {
+            $logger
+                ->pushHandler(
+                    (
+                        new Monolog\Handler\StreamHandler(
+                            'php://stderr',
+                            Monolog\Logger::INFO
+                        )
+                    )
+                        ->setFormatter(
+                            new Monolog\Formatter\LineFormatter("\n")
+                        )
                 )
-            )
-            ->pushHandler(
+                ->pushHandler(
+                    (
+                        new Monolog\Handler\StreamHandler(
+                            'php://stderr',
+                            Monolog\Logger::DEBUG
+                        )
+                    )
+                        ->setFormatter(
+                            $this->getDefaultSingleLineFormater()
+                        )
+                );
+        } else {
+            $logger->pushHandler(
                 (
                     new Monolog\Handler\StreamHandler(
                         'php://stdout',
-                        getenv('FINXLOG_DEBUG') ? Monolog\Logger::DEBUG : Monolog\Logger::INFO
+                        getenv('FINXLOG_DEBUG') > Monolog\Logger::DEBUG
+                            ? getenv('FINXLOG_DEBUG')
+                            : Monolog\Logger::INFO
                     )
                 )
-                    ->setFormatter(
-                        $this->getDefaultCliFormater()
-                    )
+                    ->setFormatter($this->getDefaultCliFormater())
             );
+        }
 
         return $logger;
     }

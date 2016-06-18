@@ -2,3 +2,4 @@
 vendor/
 composer.lock
 .env
+www/js/config_autobuild.js

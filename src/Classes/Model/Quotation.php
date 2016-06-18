@@ -34,6 +34,7 @@ class Quotation extends AbsElasticaModel
         } else {
             $query['query']['bool']['must'][0]['query_string']['query'] = $quotation;
         }
+
         return $this->getDocuments(new Query($query));
     }
 }

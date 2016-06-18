@@ -1,5 +1,5 @@
 #!/bin/bash
-FINXLOG_ROOT_DIR=`dirname $0`/../../;
+FINXLOG_ROOT_DIR=`dirname $0`/../../../;
 #import .env
 export $(cat $FINXLOG_ROOT_DIR.env | grep -P '^FINXLOG_(QUOTATION|AMQP)')
 

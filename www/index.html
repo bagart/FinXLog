@@ -3,87 +3,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <script src="https://code.jquery.com/jquery.js" crossorigin="anonymous"></script>
     <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="js/app.js"></script>
 </head>
 <body>
 <div id="graph_container" style="min-width: 400px; height: 400px; margin: 0 auto"></div>
-<script>
-    var conn = new WebSocket('ws://localhost:8080/');
-    conn.onopen = function(e) {
-        console.log("Connection established!");
-        conn.send(JSON.stringify({'type': 'subscribe', 'quotation': '_ALL'}));
-        conn.send(JSON.stringify({'type': 'subscribe', 'quotation': 'BTCUSD'}));
-        conn.send(JSON.stringify({'type': 'subscribe', 'quotation': 'BTCUSD', 'doji': 'M1'}));
-    };
-
-    conn.onmessage = function(e) {
-        console.log(e.data);
-    };
-
-
-
-
-    Highcharts.setOptions({
-        global: {
-            useUTC: false
-        }
-    });
-    var graph = new Highcharts.Chart({
-        title: {text: 'Real Time Samples'},
-        xAxis: {
-            type: 'datetime',
-            tickPixelInterval: 100
-        },
-        yAxis: {
-            title: {text: 'Samples'},
-            tickInterval: 10,
-            min: 0,
-            max: 100
-        },
-        tooltip: {
-            formatter: function () {
-                return '<b>' + this.series.name + '</b><br/>'
-                    + JSON.stringify([
-                        Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x),
-                        this.y
-                    ]);
-            }
-        },
-        chart: {
-            type: 'spline',
-            renderTo: 'graph_container',
-            events: {
-                load: function () {
-                    var series = this.series[0];
-                    var ws = new WebSocket('ws://localhost:8080');
-                    ws.onopen = function(e) {
-                        //console.log("Connection established!");
-                    };
-                    ws.onmessage = function(e) {
-                        var data = JSON.parse(e.data);
-                        console.log(data);
-                        series.addPoint([data.x, data.y], true, true);
-                    };
-
-                    ws.send(JSON.stringify({'subject': 'BTCUSD', 'interval': 'day'}));
-                }
-            }
-        },
-        series: [{
-            name: 'tst',
-            data: (function () {
-                var data = [],
-                        time = (new Date()).getTime(),
-                        i;
-                for (i = -19; i <= 0; i++) {
-                    data.push({
-                        x: time + (i * 1000),
-                        y: 0
-                    });
-                }
-                return data;
-            })()
-        }]
-    });
-</script>
 </body>
 </html>

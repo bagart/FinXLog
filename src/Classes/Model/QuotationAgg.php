@@ -128,7 +128,10 @@ class QuotationAgg extends Quotation
         $query = json_decode($this->query_doji, true);
 
         $query['query']['bool']['must'][0]['query_string']['query'] = $subject;
-        $query['aggs']['date']['date_histogram']['interval'] = $interval;
+        $query['aggs']['date']['date_histogram']['interval'] =
+            isset($this->agg_period[$interval])
+                ? $this->agg_period[$interval] . 's'
+                : $interval;
 
         return new Query($query);
     }

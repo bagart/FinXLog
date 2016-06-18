@@ -32,10 +32,11 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "cp .env.example .env"
+      "cp .env.example .env",
+      "php command/setup/web_config_build.php"
     ],
     "post-update-cmd": [
-
+      "php command/setup/web_config_build.php"
     ]
   }
 }

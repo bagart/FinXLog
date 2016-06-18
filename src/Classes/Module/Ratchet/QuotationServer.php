@@ -1,6 +1,7 @@
 <?php
 namespace FinXLog\Module\Ratchet;
 
+use FinXLog\Module\Logger;
 use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
 use Ratchet\WebSocket\WsServer;
@@ -15,7 +16,7 @@ class QuotationServer
     public function getIoServer()
     {
         if (!$this->io_server) {
-            assert(getenv('FINXLOG_WEBSOCKET_PORT') > 0);
+            assert(getenv('FINXLOG_WEBSOCKET_LISTEN_PORT') > 0);
 
             $this->io_server = IoServer::factory(
                 new HttpServer(
@@ -23,7 +24,8 @@ class QuotationServer
                         new QuotationWebSocketDelivery()
                     )
                 ),
-                getenv('FINXLOG_WEBSOCKET_PORT')
+                getenv('FINXLOG_WEBSOCKET_LISTEN_PORT'),
+                getenv('FINXLOG_WEBSOCKET_LISTEN_INTERFACE') ?: '0.0.0.0'
             );
         }
 
@@ -39,6 +41,7 @@ class QuotationServer
 
     public function run()
     {
+        Logger::dbg(':ws_wait:');
         $this->getIoServer()->run();
     }
 }

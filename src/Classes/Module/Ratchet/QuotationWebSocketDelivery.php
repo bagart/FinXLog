@@ -15,30 +15,34 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
     use WithQueueConnector;
 
     const QUOTATION_ALL = SearchQuotation::QUOTATION_ALL;
+
     /**
      * @var \SplObjectStorage|ConnectionInterface[]
      */
-    protected $clients = [];
+    protected $clients;
 
     /**
-     * @var ConnectionInterface[][][]
+     * @var Subscribers
      */
-    protected $subscribers = [];
+    protected $subscribers;
 
     /**
      * @var bool[]
      */
     protected $service_by_resource;
 
-    public function __construct()
+    public function getClients()
     {
-        $this->clients = new \SplObjectStorage;
+        if (!$this->clients) {
+            $this->clients = new \SplObjectStorage;
+        }
 
+        return $this->clients;
     }
 
     /**
      * is service => allow incoming
-     * @param ConnectionInterface $conn
+     * @param ConnectionInterface|RFC6455\Connection $conn
      * @return bool
      */
     protected function isService(ConnectionInterface $conn, $msg = null)
@@ -49,15 +53,11 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
         ) {
             return $this->service_by_resource[$conn->resourceId];
         }
-        assert(strlen(
-            getenv('FINXLOG_WEBSOCKET_SERVICE_PATH')
-            . getenv('FINXLOG_WEBSOCKET_SERVICE_FILTER_ADDR_REGEXP')
-        ));
 
         $is_service = true;
 
         if (strlen(getenv('FINXLOG_WEBSOCKET_SERVICE_FILTER_ADDR_REGEXP'))) {
-            $is_service = (bool)preg_match(
+            $is_service = $is_service && (bool) preg_match(
                 '~' . getenv('FINXLOG_WEBSOCKET_SERVICE_FILTER_ADDR_REGEXP') . '~iu',
                 $conn->remoteAddress
             );
@@ -69,7 +69,7 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
                     $is_service
                     && $conn instanceof RFC6455\Connection
                     && $conn->WebSocket->request
-                    && strstr(
+                    && false !== strstr(
                         $conn->WebSocket->request->getPath(),
                         getenv('FINXLOG_WEBSOCKET_SERVICE_PATH'),
                         1
@@ -81,7 +81,6 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
                 $e->getMessage(),
                 ['e' => $e]
             );
-
             $is_service = false;
         }
 
@@ -90,27 +89,24 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
 
     public function onOpen(ConnectionInterface $conn)
     {
-        if (!$this->isService($conn)) {
-            //waiting for manual subscribe
-            //$this->clients['quotation'][static::QUOTATION_ALL]->attach($conn);
-        }
-
-        Logger::log()->debug(
-            "WS: New "
-            . (
+        if (getenv('FINXLOG_DEBUG')) {
+            Logger::log()->info(
+                "WS: New "
+                . (
                 $this->isService($conn)
                     ? 'service'
                     : 'client'
-            )
-            . " connection: {$conn->resourceId}",
-            [
-                'is_service' => $this->isService($conn),
-                'conn' => $conn
-            ]
-        );
+                )
+                . " connection: {$conn->resourceId}",
+                [
+                    'is_service' => $this->isService($conn),
+                    'conn' => $conn
+                ]
+            );
+        }
     }
 
-    public function getPreparedMessage(ConnectionInterface $conn, $msg)
+    public function getPreparedMessage($msg, ConnectionInterface $conn = null)
     {
         $message = json_decode($msg, true);
         if (
@@ -118,7 +114,7 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
             || !is_array($message)
             || empty($message['type'])
         ) {
-            throw new WrongParams("WS: !msg: $msg");
+            throw new WrongParams("WS: !msg[type]: $msg");
         }
         if (
             !empty($message['quotation'])
@@ -144,16 +140,18 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
 
     public function onMessage(ConnectionInterface $conn, $msg)
     {
-        Logger::log()->debug(
-            "WS msg from #{$conn->resourceId}: {$msg}",
-            [
-                'conn' => $conn,
-                'is_service' => $this->isService($conn),
-                'conn_count' => count($this->service_by_resource),
-            ]
-        );
+        if (getenv('FINXLOG_DEBUG')) {
+            Logger::log()->info(
+                "WS " . ($this->isService($conn) ? 'service' : 'client'). " msg from #{$conn->resourceId}:" . mb_substr($msg,0,100) . '...',
+                [
+                    'conn' => $conn,
+                    'is_service' => $this->isService($conn),
+                    'conn_count' => count($this->service_by_resource),
+                ]
+            );
+        }
 
-        if (!$this->isService($conn) && strlen($msg) > 1000) {
+        if (!$this->isService($conn) && strlen($msg) > 100000) {
             Logger::log()->warning(
                 "WS: msg with " . round(strlen($msg) / 1000). "kb",
                 [
@@ -165,7 +163,7 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
         }
 
         try {
-            $message = $this->getPreparedMessage($conn, $msg);
+            $message = $this->getPreparedMessage($msg, $conn);
             if ($this->isService($conn, $message)) {
                 $this->addServiceIncoming($conn, $message);
             }
@@ -208,7 +206,7 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
                 ]));
                 break;
             case 'all':
-                foreach ($this->clients as $client) {
+                foreach ($this->getClients() as $client) {
                     if (!$this->isService($client)) {
                         $conn->send(json_encode($message));
                     }
@@ -216,15 +214,27 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
                 break;
             case 'send':
                 foreach (
-                    $this->subscribers
-                        [$message['quotation']]
-                        [empty($message['agg_period']) ? 0 : $message['agg_period']]
-                     as $subscriber
+                    $this->getSubscribers()->get($message)
+                    as $subscribe
                 ) {
-                    $subscriber['ws']->send(json_encode($message));
+                    $subscribe['ws']->send(json_encode($message));
                 }
+                Logger::log()->debug(':2js:');
+
                 break;
         }
+    }
+
+    /**
+     * @return Subscribers
+     */
+    public function getSubscribers()
+    {
+        if (!$this->subscribers) {
+            $this->subscribers = new Subscribers;
+        }
+
+        return $this->subscribers;
     }
 
     /**
@@ -234,73 +244,72 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
      */
     protected function addClientIncoming(ConnectionInterface $conn, array $message)
     {
-        assert(!empty($message['type']));
-        if ($message['type'] != 'subscribe') {
-            return false;
+        if (empty($message['type'])) {
+            Logger::log()->warning('WS client? message without type');
+            return $this;
         }
-        $agg_period = 0;
-        if (!empty($message['doji'])) {
-            $all_period = (new QuotationAgg)->getAggPeriod()[strtoupper($message['doji'])];
-            if (empty($all_period[strtoupper($message['doji'])])) {
-                throw (new WrongParams('WS: wrong doji period on subscribe'))
-                    ->setParams(['doji']);
-            }
-            $agg_period = $all_period[strtoupper($message['doji'])];
+
+        switch ($message['type']) {
+            case 'subscribe':
+                $agg_period = 0;
+                if (!empty($message['doji'])) {
+                    $all_period = (new QuotationAgg)->getAggPeriod()[strtoupper($message['doji'])];
+                    if (empty($all_period[strtoupper($message['doji'])])) {
+                        throw (new WrongParams('WS: wrong doji period on subscribe'))
+                            ->setParams(['doji']);
+                    }
+                    $message['agg_period'] = $all_period[strtoupper($message['doji'])];
+                }
+
+                /**
+                 * [USDEUR][3600][#123] = [ ... ];
+                 */
+                $this->getSubscribers()->add(
+                    ['ws' => $conn] + $message + ['agg' => null,]
+                );
+
+                //load previous period
+                $this->addJob($new_job = [
+                    'quotation' => $message['quotation'],
+                    'agg' => !empty($message['doji']) ? 'doji' : null,
+                    'agg_period' => !empty($message['doji']) ? $message['doji'] : null,
+                ]);
+                Logger::log()->info('AMQP add:' . json_encode($new_job));
+                break;
+            case 'unsubscribe':
+                $this->getSubscribers()->drop($conn, $message);
+                break;
         }
-        /**
-         * [USDEUR][3600][#123] = [ ... ];
-         */
-        $this->subscribers
-            [$message['quotation']]
-            [$agg_period]
-            [$conn->resourceId]
-            = [
-                'ws' => $conn,
-                'agg' => !empty($message['doji']) ? 'doji' : null,
-        ];
-
-        //load previous period
-        $this->addJob([
-            'quotation' => $message['quotation'],
-            'agg' => !empty($message['doji']) ? 'doji' : null,
-            'agg_period' => !empty($message['doji']) ? $message['doji'] : null,
-        ]);
-
-        //@todo add queue
+        return $this;
    }
 
     public function onClose(ConnectionInterface $conn)
     {
-        Logger::log()->debug(
-            "WS:Disconnect with #{$conn->resourceId}",
-            [
-                'conn' => $conn,
-            ]
-        );
+        if (getenv('FINXLOG_DEBUG')) {
+            Logger::log()->info(
+                "WS:Disconnect with #{$conn->resourceId}",
+                [
+                    'conn' => $conn,
+                ]
+            );
+        }
 
         unset($this->service_by_resource[$conn->resourceId]);
-
-        foreach ($this->subscribers as $k1 => $v1) {
-            foreach ($v1 as $k2=>$v2) {
-                unset($this->subscribers[$k1][$k2][$conn->resourceId]);
-            }
-            $this->subscribers[$k1] = array_filter($this->subscribers[$k1]);
-        }
-        $this->subscribers = array_filter($this->subscribers);
-        $this->clients->detach($conn);
-
+        $this->getSubscribers()->drop($conn);
+        $this->getClients()->detach($conn);
     }
 
     public function onError(ConnectionInterface $conn, \Exception $e)
     {
-        Logger::log()->debug(
-            "WS: " .get_class($e) . ": {$e->getMessage()} with #{$conn->resourceId}",
-            [
-                //'this', $this,
-                'e' => $e,
-                'conn' => $conn
-            ]
-        );
+        if (getenv('FINXLOG_DEBUG')) {
+            Logger::log()->info(
+                "WS: " . get_class($e) . ": {$e->getMessage()} with #{$conn->resourceId}",
+                [
+                    'e' => $e,
+                    'conn' => $conn
+                ]
+            );
+        }
         $conn->close();
     }
 
