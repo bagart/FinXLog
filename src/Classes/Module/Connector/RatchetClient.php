@@ -86,12 +86,6 @@ class RatchetClient implements Iface\WsConnector
         return $this;
     }
 
-    public function reconnect()
-    {
-        $this->promise = null;
-        $this->event_loop = null;
-        $this->connector = null;
-    }
     public function send($message, callable $incomingCallback = null)
     {
         //reconnec
@@ -106,10 +100,14 @@ class RatchetClient implements Iface\WsConnector
             use ($message, $event_loop, $incomingCallback, $self)
             {
 
-                $conn->on('error', function($error) use ($conn, $self, $message) {
-                    //it's check only on second request
-                    $self->reconnect();
-                    $self->send($message);//without - 3 iterations
+                $conn->on('error', function($error) use ($conn, $self, $message, $incomingCallback) {
+                    //@todo reconnect it's check only on second
+                    //without send - 3 iterations
+                    if ($incomingCallback) {
+                        $self->send($message, $incomingCallback);
+                    } else {
+                        $self->send($message);
+                    }
                 });
 
                 if (!is_string($message)) {
