@@ -86,19 +86,32 @@ class RatchetClient implements Iface\WsConnector
         return $this;
     }
 
+    public function reconnect()
+    {
+        $this->promise = null;
+        $this->event_loop = null;
+        $this->connector = null;
+    }
     public function send($message, callable $incomingCallback = null)
     {
+        //reconnec
         //force new connect
-        //$this->promise = null;
-        //$this->event_loop = null;
-        //$this->connector = null;
+
+        $self = $this;
+
         $is_first = empty($this->event_loop);
         $event_loop = $this->getEventLoop();
-
         $this->getPromise()->then(
             function(\Ratchet\Client\WebSocket $conn)
-            use ($message, $event_loop, $incomingCallback)
+            use ($message, $event_loop, $incomingCallback, $self)
             {
+
+                $conn->on('error', function($error) use ($conn, $self, $message) {
+                    //it's check only on second request
+                    $self->reconnect();
+                    $self->send($message);//without - 3 iterations
+                });
+
                 if (!is_string($message)) {
                     $message = json_encode(
                         $message,
@@ -128,7 +141,7 @@ class RatchetClient implements Iface\WsConnector
                                 }
                             });
                         //@todo check that the socket stream is empty(released) without on:event
-                        $conn->on('messa;ge', function ($message) use ($conn) {
+                        $conn->on('message', function ($message) use ($conn) {
                             Logger::log()->warning(
                                 "AMQP2WS(service) ignore message: {$message}"
                             );
@@ -136,9 +149,11 @@ class RatchetClient implements Iface\WsConnector
                     }
                 }
                 $conn->send($message);
-
                 //exit from EventLoop
                 $event_loop->stop();
+
+
+
             },
             function (\Throwable $e)
             use ($event_loop, $message, $incomingCallback)
@@ -156,6 +171,7 @@ class RatchetClient implements Iface\WsConnector
         if ($is_first) {
             $event_loop->run();
         }
+
         //push all queue
         $event_loop->tick();
 

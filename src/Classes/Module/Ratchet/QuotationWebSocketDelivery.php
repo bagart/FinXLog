@@ -87,6 +87,9 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
         return $this->service_by_resource[$conn->resourceId] = $is_service;
     }
 
+    /**
+     * @param ConnectionInterface|RFC6455\Connection $conn
+     */
     public function onOpen(ConnectionInterface $conn)
     {
         if (getenv('FINXLOG_DEBUG')) {
@@ -138,11 +141,15 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
         return $message;
     }
 
+    /**
+     * @param ConnectionInterface|RFC6455\Connection $conn
+     */
     public function onMessage(ConnectionInterface $conn, $msg)
     {
         if (getenv('FINXLOG_DEBUG')) {
             Logger::log()->info(
-                "WS " . ($this->isService($conn) ? 'service' : 'client'). " msg from #{$conn->resourceId}:" . mb_substr($msg,0,100) . '...',
+                "WS " . ($this->isService($conn) ? 'service' : 'client').
+                    " msg from #{$conn->resourceId}:" . mb_substr($msg, 0, 100) . '...',
                 [
                     'conn' => $conn,
                     'is_service' => $this->isService($conn),
@@ -187,11 +194,10 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
             );
         }
     }
-
     /**
      * delivery to clients
-     * @param ConnectionInterface $conn
-     * @param string $msg
+     * @param ConnectionInterface|RFC6455\Connection $conn
+     * @param array $message
      */
     protected function addServiceIncoming(ConnectionInterface $conn, array $message)
     {
@@ -217,7 +223,7 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
                     $this->getSubscribers()->get($message)
                     as $subscribe
                 ) {
-                    $subscribe['ws']->send(json_encode($message));
+                    $subscribe['ws']->send(json_encode($message, JSON_HEX_TAG));
                 }
                 Logger::log()->debug(':2js:');
 
@@ -239,8 +245,8 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
 
     /**
      * set client opts
-     * @param ConnectionInterface $conn
-     * @param string $msg
+     * @param ConnectionInterface|RFC6455\Connection $conn
+     * @param array $message
      */
     protected function addClientIncoming(ConnectionInterface $conn, array $message)
     {
@@ -250,8 +256,14 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
         }
 
         switch ($message['type']) {
+            case 'quotations':
+                //mock
+                $conn->send(json_encode([
+                    "type" => 'quotations',
+                    'quotations' => ['BTCUSD','USDBTC','USDEUR','EURUSD']
+                ]));
+                break;
             case 'subscribe':
-                $agg_period = 0;
                 if (!empty($message['doji'])) {
                     $all_period = (new QuotationAgg)->getAggPeriod()[strtoupper($message['doji'])];
                     if (empty($all_period[strtoupper($message['doji'])])) {
@@ -278,11 +290,15 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
                 break;
             case 'unsubscribe':
                 $this->getSubscribers()->drop($conn, $message);
+                Logger::log()->info('AMQP unsubscribe');
                 break;
         }
         return $this;
    }
 
+    /**
+     * @param ConnectionInterface|RFC6455\Connection $conn
+     */
     public function onClose(ConnectionInterface $conn)
     {
         if (getenv('FINXLOG_DEBUG')) {
@@ -299,6 +315,10 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
         $this->getClients()->detach($conn);
     }
 
+    /**
+     * @param ConnectionInterface|RFC6455\Connection $conn
+     * @param \Exception $e
+     */
     public function onError(ConnectionInterface $conn, \Exception $e)
     {
         if (getenv('FINXLOG_DEBUG')) {

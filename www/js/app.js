@@ -13,26 +13,58 @@ var FinXLog = {
         }
         this.ws.subscribe('_ALL');
     },
+    dbg: function(msg, obj) {
+        if (!FinXLog.config.FINXLOG_DEBUG) return;
+        console.log(msg);
+        if (obj) console.log(obj);
+    },
     ws: {
         subscribes: [
             {type: 'subscribe', quotation: '_ALL', doji: null}
+        ],
+        query_onstart: [//just for non-static
+            {type: 'quotations'}
         ],
         conn:  null,
         setup: function () {
             this.conn = new WebSocket(this.getWsUrl());
             this.conn.onopen = function() {
                 if (FinXLog.config.FINXLOG_DEBUG) {
-                    console.log('WS: open');
+                    FinXLog.dbg('WS: open');
                 }
+                for (var i = 0; i < FinXLog.ws.query_onstart.length; ++i) {
+                    FinXLog.ws.conn.send(FinXLog.ws.query_onstart[i]);
+                }
+
                 for (var i = 0; i < FinXLog.ws.subscribes.length; ++i) {
                     FinXLog.ws.send(FinXLog.ws.subscribes[i]);
                 }
             };
 
-            this.conn.onmessage = function (msg) {
-                console.log('incoming: ');
-                console.log(msg.data);
-            };
+            this.conn.onmessage = this.onmessage;
+        },
+        onmessage: function (request) {
+            var message;
+            try {
+                message = JSON.parse(request);
+                FinXLog.dbg('incoming:');
+                FinXLog.dbg(message.data.type);
+            } catch (err) {
+                FinXLog.dbg('wrong incoming:');
+                FinXLog.dbg(err);
+                FinXLog.dbg(request.data);
+                throw err
+            }
+
+
+            switch (message.data.type) {
+                case 'quotations': {
+                    for (var i = 0; i < msg.data.quotations.length; ++i) {
+                        this.dbg(msg.data.quotations[i]);
+                    }
+                    break;
+                }
+            }
         },
         subscribe: function (subj, doji, stop) {
             var request = {
@@ -56,7 +88,7 @@ var FinXLog = {
             }
         },
         send: function (obj) {
-            console.log(obj);
+            FinXLog.dbg('send:', obj);
             this.conn.send(JSON.stringify(obj));
         },
         getWsUrl: function ()
