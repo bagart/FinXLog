@@ -100,7 +100,12 @@ class RatchetClient implements Iface\WsConnector
             use ($message, $event_loop, $incomingCallback)
             {
                 if (!is_string($message)) {
-                    $message = json_encode($message);
+                    $message = json_encode(
+                        $message,
+                        getenv('FINXLOG_DEBUG')
+                            ? JSON_PRETTY_PRINT
+                            : null
+                    );
                 }
                 if (getenv('FINXLOG_DEBUG')) {
                     Logger::log()->info("AMQP2WS(service) send try:\t{$message}");
