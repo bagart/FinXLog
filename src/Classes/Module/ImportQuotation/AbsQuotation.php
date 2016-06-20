@@ -1,8 +1,8 @@
 <?php
-namespace FinXLog\Module\Import;
+namespace FinXLog\Module\ImportQuotation;
 use FinXLog\Iface;
 use FinXLog\Module\Connector;
-use FinXLog\Module\Import;
+use FinXLog\Module\ImportQuotation;
 use FinXLog\Traits;
 use FinXLog\Model;
 use Pheanstalk\Job;
@@ -12,20 +12,18 @@ use Pheanstalk\Job;
  * Class SaveQuotation
  * @package FinXLog\Module\Import
  */
-abstract class AbsQuotation implements Iface\ModuleImport
+abstract class AbsQuotation implements Iface\ModuleImportQueue
 {
     use Traits\WithQueueConnector;
 
     private $fail_queue_connector = null;
     private $model_quotation = null;
 
-    abstract public function run($limit = null);
-
     public function getFailQueueConnector()
     {
-        if ($this->fail_queue_connector) {
+        if (!$this->fail_queue_connector) {
             $this->fail_queue_connector = new Connector\Queue(
-                getenv('FINXLOG_AMQP_TUBE_QUOTATION_FAIL')
+                getenv('FINXLOG_AMQP_TUBE_IMPORT_FAIL')
             );
         }
 
@@ -44,28 +42,36 @@ abstract class AbsQuotation implements Iface\ModuleImport
     public function getDefaultQueueConnector()
     {
         return new Connector\Queue(
-            getenv('FINXLOG_AMQP_TUBE_QUOTATION')
+            getenv('FINXLOG_AMQP_TUBE_IMPORT')
         );
     }
 
 
     public function failQueu(Job $queue_job)
     {
-        $this->getFailQueueConnector()
-            ->put(
-                $queue_job->getData()
-            );
+        if ($this->getFailQueueConnector()) {
+            $this->getFailQueueConnector()
+                ->put(
+                    $queue_job->getData()
+                );
+        }
 
-        $this->getQueueConnector()
-            ->delete($queue_job);
+        if ($this->getQueueConnector()) {
+            $this->getQueueConnector()
+                ->delete($queue_job);
+        }
+
+        return $this;
     }
 
     public function importQuotation($string)
     {
         $this->getModelQuotation()
             ->save(
-                Import\Source\Telnet::getFromRaw($string)
+                ImportQuotation\Source\Telnet::getFromRaw($string)
             );
+
+        return $this;
     }
 
 }

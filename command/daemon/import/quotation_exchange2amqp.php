@@ -4,9 +4,9 @@
 /**
  * Always on service: load quotation from source
  */
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../../vendor/autoload.php';
 
-$import = new FinXLog\Module\Import\SaveQuotation();
+$import = new FinXLog\Module\ImportQuotation\LoadQuotation();
 
 $import->run(
     !empty($argv[1])

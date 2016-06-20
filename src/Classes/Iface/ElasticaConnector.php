@@ -1,7 +1,7 @@
 <?php
 namespace FinXLog\Iface;
 
-interface ElasticoConnector extends Connector
+interface ElasticaConnector extends Connector
 {
     public function saveBulk(array $objects);
     public function save($object);
