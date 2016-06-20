@@ -117,7 +117,7 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
             || !is_array($message)
             || empty($message['type'])
         ) {
-            throw new WrongParams("WS: !msg[type]: $msg");
+            throw new WrongParams("WS: !msg[type]: " .var_export($msg, true));
         }
         if (
             !empty($message['quotation'])
@@ -131,11 +131,11 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
         }
 
         if (
-            !empty($message['doji'])
-            && !preg_match('~^[\w\d_\.]+$~u', $message['doji'])
+            !empty($message['agg_period'])
+            && !preg_match('~^[\w\d_\.]+$~u', $message['agg_period'])
         ) {
-            throw (new WrongParams("WS: wrong doji: $msg"))
-                ->setParams(['doji']);
+            throw (new WrongParams("WS: wrong agg_period: $msg"))
+                ->setParams(['agg_period']);
         }
 
         return $message;
@@ -177,6 +177,14 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
             //allow service  subscribe
             $this->addClientIncoming($conn, $message);
         } catch (\Throwable $e) {
+            $error_message = ['type' => 'error'];
+            if (getenv('FINXLOG_DEBUG') && getenv('FINXLOG_DEBUG') < 300 /* \Monolog\Logger::NOTICE */) {
+                $error_message['error'] = [
+                    'class' => get_class($e),
+                    'message' => $e->getMessage(),
+                ];
+            }
+            $conn->send(json_encode($error_message));
             Logger::log()->warning(
                 "WS: {$e->getMessage()} from "
                 . (
@@ -223,7 +231,10 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
                     $this->getSubscribers()->get($message)
                     as $subscribe
                 ) {
-                    $subscribe['ws']->send(json_encode($message, JSON_HEX_TAG));
+                    $subscribe['ws']->send(json_encode(
+                        ['type' => 'subscribe']
+                        + $message
+                    ));
                 }
                 Logger::log()->debug(':2js:');
 
@@ -243,6 +254,27 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
         return $this->subscribers;
     }
 
+    protected function checkPeriod($period, $field_name = null)
+    {
+        if (
+            strlen($period)
+            && !is_numeric($period)
+            && empty((new QuotationAgg)->getAggPeriod()[$period])
+        ) {
+            $e = new WrongParams(
+                "WS: wrong period: $period"
+                . ($field_name !== null ? " field: $field_name" : '')
+            );
+            if ($field_name !== null) {
+                $e->setParams($field_name);
+            }
+
+            throw $e;
+        }
+
+        return $this;
+    }
+
     /**
      * set client opts
      * @param ConnectionInterface|RFC6455\Connection $conn
@@ -257,42 +289,28 @@ class QuotationWebSocketDelivery implements \Ratchet\MessageComponentInterface
 
         switch ($message['type']) {
             case 'quotations':
-                //mock
                 $conn->send(json_encode([
                     "type" => 'quotations',
                     'quotations' => ['BTCUSD','USDBTC','USDEUR','EURUSD']
                 ]));
                 break;
             case 'subscribe':
-                if (!empty($message['doji'])) {
-                    $all_period = (new QuotationAgg)->getAggPeriod()[strtoupper($message['doji'])];
-                    if (empty($all_period[strtoupper($message['doji'])])) {
-                        throw (new WrongParams('WS: wrong doji period on subscribe'))
-                            ->setParams(['doji']);
-                    }
-                    $message['agg_period'] = $all_period[strtoupper($message['doji'])];
+                if (!empty($message['agg_period'])) {
+                    $this->checkPeriod($message['agg_period']);
                 }
-
-                /**
-                 * [USDEUR][3600][#123] = [ ... ];
-                 */
-                $this->getSubscribers()->add(
-                    ['ws' => $conn] + $message + ['agg' => null,]
-                );
+                $this->getSubscribers()
+                    ->add(['ws' => $conn] + $message);
 
                 //load previous period
-                $this->addJob($new_job = [
-                    'quotation' => $message['quotation'],
-                    'agg' => !empty($message['doji']) ? 'doji' : null,
-                    'agg_period' => !empty($message['doji']) ? $message['doji'] : null,
-                ]);
-                Logger::log()->info('AMQP add:' . json_encode($new_job));
+                $this->addJob($message);
+                Logger::log()->info('AMQP add:' . json_encode($message));
                 break;
             case 'unsubscribe':
                 $this->getSubscribers()->drop($conn, $message);
                 Logger::log()->info('AMQP unsubscribe');
                 break;
         }
+
         return $this;
    }
 

@@ -26,6 +26,10 @@ class Quotation extends AbsElasticaModel
       "sort": []
     }';
 
+    /**
+     * @param string $quotation
+     * @return \Elastica\Document[]
+     */
     public function getQuotations($quotation = null)
     {
         $query = json_decode($this->query_quotations, true);

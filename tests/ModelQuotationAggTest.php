@@ -29,10 +29,10 @@ class ModelQuotationAggTest extends PHPUnit_Framework_TestCase
 
     }
 
-    public function test_dogi()
+    public function test_getAgg()
     {
         try {
-            $this->assertTrue(is_array($this->getApp()->getDoji('BTCUSD')));
+            $this->assertTrue(is_array($this->getApp()->getAgg('BTCUSD')));
            } catch (\Elastica\Exception\ConnectionException $e) {
             //connection error
         } catch (Throwable $e) {

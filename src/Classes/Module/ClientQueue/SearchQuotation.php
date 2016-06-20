@@ -16,34 +16,49 @@ class SearchQuotation extends AbsQuotation
 
     public function makeJob(Job $queue_job)
     {
-        $job = json_decode($queue_job->getData(), true);
+        $job = json_decode($queue_job->getData(), true)
+            + [
+                'agg_type' => null,
+                'agg_period' => null,
+            ];
 
         if (!is_array($job) || empty($job['quotation'])) {
             throw new Exception\WrongParams('!job with quotation');
         }
-        if (!empty($job['agg'])) {
-            $quotations = $this->getModelQuotation()
-                ->getDoji($job['quotation'], $job['agg_period']);
-        } else {
-            $quotations = $this->getModelQuotation()
-                ->getQuotations(
-                    $job['quotation'] == static::QUOTATION_ALL
-                        ? null
-                        : $job['quotation']
-                );
-            foreach ($quotations as $key => $value) {
-                /**
-                 * @var $value Document
-                 */
-                $quotations[$key] = $value->getData();
-            }
+
+        switch ($job['agg_type']) {
+            case 'agg':
+            case 'full':
+                $quotations = $this->getModelQuotation()
+                    ->getAgg($job['quotation'], $job['agg_period']);
+                break;
+            case 'doji':
+            case 'AAPL':
+                $quotations = $this->getModelQuotation()
+                    ->getAAPL($job['quotation'], $job['agg_period']);
+                break;
+            default:
+                $quotations = $this->getModelQuotation()
+                    ->getQuotations(
+                        $job['quotation'] == static::QUOTATION_ALL
+                            ? null
+                            : $job['quotation']
+                    );
+                foreach ($quotations as $key => $value) {
+                    $quotations[$key] = $value->getData();
+                }
+                break;
         }
-        $this->addWsMessage([
-            'type' => 'send',
-            'quotation' => $job['quotation'],
-            'agg_period' => $job['agg_period'],
-            'quotations' => $quotations,
-        ]);
+
+        $this->addWsMessage(
+            [
+                'type' => 'send',
+                'quotations' => $quotations,
+            ]
+            + $job
+        );
+
+        return $this;
     }
 
     public function run()

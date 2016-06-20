@@ -121,7 +121,7 @@ class AbsElasticaModel extends AbsModel implements Iface\ElasticaConnector
     /**
      * return
      * @param Query $query
-     * @return array
+     * @return \Elastica\Document[]
      */
     public function getDocuments(Query $query)
     {
