@@ -5,6 +5,7 @@ Complete:
  - save
  - queue
  - elastic log
+ - highcharts AAPL with websocket
 
 Instruments:
  - ElasticSearch for quick big data search
@@ -16,13 +17,12 @@ Optional:
  - BeanstalkD(AMQP Queue manager). reason for use: quick delivery for "any" load with single stream(bash-scrpit)
 
 @todo
- - highcharts on websocket
  - simple json API 
+ - switch quottion and period
+maby:
  - Ratchet + WAMP + ZMQ
-Optional:
  - sql db
- - make quotation_exchange2db.sh
- - lock for parallel import
+ - split traffic for parallel import ( % n )
  
 # Install
 ```bash
