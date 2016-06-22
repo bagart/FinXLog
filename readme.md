@@ -64,8 +64,8 @@ important: direct import has minimal guarantee for stable:
 AMQP is depend by high performance, scalable beanstalk (and opensource client)
 
 
-## Required(curently - ): WebSocket
-WebSocket is require AMQP
+## Required(currently - ): WebSocket
+AMQP is require for WebSocket
     or need implement async elasticsearch client with guzzle or reactphp/http-client 
     or need implement async reactphp/child-process
 not ready but simple:
