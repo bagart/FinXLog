@@ -7,7 +7,7 @@ Complete:
  - elastic log
  - highcharts AAPL with websocket
 
-Instruments:
+Components:
  - ElasticSearch for quick big data search
  - Composer, PSR-4
  - Monolog
@@ -19,6 +19,7 @@ Optional:
 @todo
  - simple json API 
  - switch quottion and period
+ 
 maby:
  - Ratchet + WAMP + ZMQ
  - sql db
