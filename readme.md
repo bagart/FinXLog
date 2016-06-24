@@ -1,29 +1,30 @@
 v 0.9.2
-Complete: 
- - import
- - filter
- - save
- - queue
- - elastic log
- - highcharts AAPL with websocket
+Quotation Exchange graph builder
 
-Components:
- - ElasticSearch for quick big data search
+Front End: 
+ - static html
+ - websocket
+ - HighCharts (Doji graph)
+
+Back End: 
+ - ReactPHP (Ratchet for WebSocket)
+ - ElasticSearch for big data aggregation
+ - BeanstalkD Queue
+ - import (bash or php)
  - Composer, PSR-4
  - Monolog
  - ".ENV"  environment
 
-Optional:
- - BeanstalkD(AMQP Queue manager). reason for use: quick delivery for "any" load with single stream(bash-scrpit)
-
 @todo
- - simple json API 
- - switch quottion and period
+ - simple json API
+ - visual switch for quotation and period
+ - load real exchange
+ - performance tests
  
-maby:
+maybe:
  - Ratchet + WAMP + ZMQ
- - sql db
- - split traffic for parallel import ( % n )
+ - node.js ws loop
+ - for too big import stream: split traffic(X % n) for parallel import in different instance with queue controll
  
 # Install
 ```bash
