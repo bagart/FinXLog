@@ -1,5 +1,8 @@
-v 0.9.2
-Quotation Exchange graph builder
+# Quotation Exchange view, graph builder
+
+Master: v0.9.2
+
+
 
 Front End: 
  - static html
