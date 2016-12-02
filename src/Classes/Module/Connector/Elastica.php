@@ -8,7 +8,7 @@ use FinXLog\Traits;
  * Class Db
  * @package FinXLog\Module\Connector
  */
-class Elastico implements Iface\Connector
+class Elastica implements Iface\Connector
 {
     use Traits\WithConnectorRaw;
     protected $param = [];
@@ -22,11 +22,11 @@ class Elastico implements Iface\Connector
 
     public function getDefaultConnector(array $params = [])
     {
-        assert(!empty(getenv('FINXLOG_ELASTICO_PARAM')));
-        assert(!empty(json_decode(getenv('FINXLOG_ELASTICO_PARAM'))));
+        assert(!empty(getenv('FINXLOG_ELASTICA_PARAM')));
+        assert(!empty(json_decode(getenv('FINXLOG_ELASTICA_PARAM'))));
 
         return new \Elastica\Client(
-            $this->param + json_decode(getenv('FINXLOG_ELASTICO_PARAM'), true)
+            $this->param + json_decode(getenv('FINXLOG_ELASTICA_PARAM'), true)
         );
     }
 }

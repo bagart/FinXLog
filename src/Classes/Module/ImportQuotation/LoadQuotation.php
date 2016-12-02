@@ -1,13 +1,11 @@
 <?php
-namespace FinXLog\Module\Import;
+namespace FinXLog\Module\ImportQuotation;
 
 use FinXLog\Exception\ConnectionError;
-use FinXLog\Exception\ErrorParam;
 use FinXLog\Iface;
 use FinXLog\Module\Connector;
 use FinXLog\Module\Logger;
 use FinXLog\Traits;
-use FinXLog\Helper;
 use FinXLog\Model;
 
 /**
@@ -33,17 +31,30 @@ class LoadQuotation extends AbsQuotation
     public function run($limit = null)
     {
         while ($limit === null || --$limit >= 0) {
-            $this->saveJob(
-                $this->getConnector()
-                    ->getQuotation()
-            );
-            Logger::log()->info('job done');
+            $import = null;
+            try {
+                $import = $this->getConnector()
+                    ->getQuotation();
+            } catch (\Throwable $e) {
+                Logger::log()->debug('-');
+                Logger::error('LoadQuotation getQuotation error', $e);
+            }
+
+            if ($import) {
+                try {
+                    $this->addJob($import);
+                    Logger::log()->debug('+');
+                } catch (\Exception $e) {
+                    Logger::log()->debug('-');
+                    Logger::error('LoadQuotation saveJob. lost: ' . var_export($import, true), $e);
+                }
+            }
         }
 
         return $this;
     }
 
-    public function saveJob($string)
+    public function addJob($string)
     {
         if ($this->work_with_amqp) {
             if ($this->getQueueConnector()) {

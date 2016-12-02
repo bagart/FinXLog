@@ -1,9 +1,11 @@
 <?php
-namespace FinXLog\Module\Import\Source;
+namespace FinXLog\Module\ImportQuotation\Source;
 use FinXLog\Exception;
+
 abstract class AbsSource
 {
-    const DATETIME_FORMAT = 'Y/m/d h:i:s';
+    const DATETIME_FORMAT = 'Y/m/d H:i:s';
+
     protected static $valid_quotation = [
         'S' => 'MSG',
         'T' => '2001-01-01',
@@ -25,19 +27,21 @@ abstract class AbsSource
                 $result
             )
         ) {
-            throw new Exception\WrongParam(
+            throw (new Exception\WrongImport(
                 'import quotatin with empty param: '
                 . implode(', ', array_keys($diff))
-            );
+            ))
+                ->setParams(['quotation' =>$result]);
         }
         if (!strtotime($result['T'])) {
-            throw new Exception\WrongParam('is not a valid datetime: ' . $result['T']);
+            throw (new Exception\WrongParams('is not a valid datetime: ' . $result['T']))
+                ->setParams(['T' => $result['T']]);
         }
     }
 
     public static function filter(array $result)
     {
-        if (getenv('FINXLOG_FILTER_OTHER')) {
+        if (getenv('FINXLOG_IMPORT_FILTER_OTHER')) {
             $result = array_diff_key(
                 $result,
                 static::getValidQuotation()
@@ -49,9 +53,9 @@ abstract class AbsSource
 
     public static function prepare(array $result)
     {
-        assert(!empty($result['T']));
-
         $result['T'] = static::getTime($result['T']);
+        $result['B'] = (float) $result['B'];
+        assert(!empty($result['B']));
 
         return $result;
     }
@@ -59,7 +63,8 @@ abstract class AbsSource
     {
         $timestamp = strtotime($string);
         if (!$timestamp) {
-            throw new Exception\WrongParam('is not a valid datetime: ' . $string);
+            throw (new Exception\WrongParams('is not a valid datetime: ' . $string))
+                ->setParams(['T' => $string]);
         }
         return date(static::DATETIME_FORMAT, $timestamp);
     }
